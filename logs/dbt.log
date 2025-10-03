@@ -1,0 +1,4 @@
+dbt-fusion 2.0.0-preview.33
+   Loading ~/.dbt/profiles.yml
+ Succeeded [  1.20s] model dbt_atrivedi_gs.customers (view)
+  Finished 'build' target 'dev' in 2s 909ms
