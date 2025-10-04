@@ -1,39 +1,4 @@
-'version: 2
-
-sources:
-  - name: jaffle_shop
-    description: ""
-    database: raw
-    tables:
-      - name: orders
-        description: ""
-        columns:
-          - name: id
-            data_type: number
-            description: ""
-          - name: user_id
-            data_type: number
-            description: ""
-          - name: order_date
-            data_type: date
-            description: ""
-          - name: status
-            data_type: varchar
-            description: ""
-          - name: _etl_loaded_at
-            data_type: timestamp_ntz
-            description: ""
-
-      - name: customers
-        description: ""
-        columns:
-          - name: id
-            data_type: number
-            description: ""
-          - name: first_name
-            data_type: varchar
-            description: ""
-          - name: last_name
-            data_type: varchar
-            description: ""
-'
+dbt-fusion 2.0.0-preview.34
+   Loading ~/.dbt/profiles.yml
+   Loading packages.yml
+  Finished 'freshness' target 'dev' in 293ms
