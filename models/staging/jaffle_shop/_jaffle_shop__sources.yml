@@ -18,9 +18,14 @@ sources:
           - name: id
             data_type: number
             description: "order id"
+            data_tests:
+              - not_null
+              - unique
           - name: user_id
             data_type: number
             description: "customer id"
+            data_tests:
+              - not_null
           - name: order_date
             data_type: date
             description: "order date"
@@ -37,6 +42,9 @@ sources:
           - name: id
             data_type: number
             description: "customer id"
+            data_tests:
+              - not_null
+              - unique
           - name: first_name
             data_type: varchar
             description: "first name of the customer"
