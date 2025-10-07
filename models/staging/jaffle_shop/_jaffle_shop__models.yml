@@ -34,6 +34,10 @@ models:
         description: "Identifier for the customer who placed the order."
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                field: customer_id
+                to: ref('stg_jaffle_shop__customers')
 
       - name: order_date
         data_type: date
@@ -41,7 +45,11 @@ models:
 
       - name: order_status
         data_type: varchar
-        description: "Current status of the order."
+        description: " {{ doc('order_status') }} "
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['completed', 'returned', 'placed', 'return_pending', 'shipped']
 
       - name: _etl_loaded_at
         data_type: timestamp_ntz
