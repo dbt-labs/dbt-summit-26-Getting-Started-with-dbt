@@ -1,0 +1,53 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    description: "source data for the jaffle shop"
+    database: raw
+    tables:
+      - name: orders
+        description: "source data for orders"
+        config:
+          freshness: 
+            warn_after:
+              count: 12
+              period: hour
+          loaded_at_field: _etl_loaded_at
+        
+        columns:
+          - name: id
+            data_type: number
+            description: "order id"
+            data_tests:
+              - not_null
+              - unique
+          - name: user_id
+            data_type: number
+            description: "customer id"
+            data_tests:
+              - not_null
+          - name: order_date
+            data_type: date
+            description: "order date"
+          - name: status
+            data_type: varchar
+            description: "status of the order"
+          - name: _etl_loaded_at
+            data_type: timestamp_ntz
+            description: "timestamp when the record was loaded into the warehouse"
+
+      - name: customers
+        description: "source data for customers"
+        columns:
+          - name: id
+            data_type: number
+            description: "customer id"
+            data_tests:
+              - not_null
+              - unique
+          - name: first_name
+            data_type: varchar
+            description: "first name of the customer"
+          - name: last_name
+            data_type: varchar
+            description: "surname of the customer"

@@ -1,4 +1,0 @@
-dbt-fusion 2.0.0-preview.34
-   Loading ~/.dbt/profiles.yml
-   Loading packages.yml
-  Finished 'freshness' target 'dev' in 293ms
