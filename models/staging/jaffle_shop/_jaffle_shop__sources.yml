@@ -38,6 +38,12 @@ sources:
 
       - name: customers
         description: "source data for customers"
+        config:
+          freshness: 
+            warn_after:
+              count: 12
+              period: hour
+
         columns:
           - name: id
             data_type: number
