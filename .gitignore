@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 /target/
 target/manifest.json
 dbt_packages/
 logs/
 dbt_internal_packages/
 .vscode/
+=======
+.vscode/
+dbt_internal_packages/
+dbt_packages/
+target/
+logs/
+>>>>>>> b2455550b0330270f291c830ae895f8a0157d49d
