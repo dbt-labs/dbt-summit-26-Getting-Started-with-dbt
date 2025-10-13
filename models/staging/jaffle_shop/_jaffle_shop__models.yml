@@ -8,4 +8,6 @@ models:
           - unique
       - name: customer_id
         description: "The unique identifier for each customer."
+        data_tests:
+          - not_null
         
