@@ -1,42 +1,46 @@
 sources:
   - name: jaffle_shop
-    description: ""
+    description: "Source data from the Jaffle Shop application, containing customer and order information."
     database: raw
     tables:
       - name: customers
-        description: ""
+        description: "Contains details about each customer registered with Jaffle Shop."
         columns:
           - name: id
             data_type: number
-            description: ""
+            description: "Unique identifier for each customer."
             data_tests:
               - unique
               - not_null
           - name: first_name
             data_type: varchar
-            description: ""
+            description: "Customer's first name."
           - name: last_name
             data_type: varchar
-            description: ""
+            description: "Customer's last name."
 
       - name: orders
-        description: ""
+        description: "Contains all orders placed by customers at Jaffle Shop."
+        config:
+          freshness:
+            warn_after: {count: 12, period: hour}
+          loaded_at_field: _etl_loaded_at
         columns:
           - name: id
             data_type: number
-            description: ""
+            description: "Unique identifier for each order."
             data_tests:
               - unique
               - not_null
           - name: user_id
             data_type: number
-            description: ""
+            description: "Identifier for the customer who placed the order."
           - name: order_date
             data_type: date
-            description: ""
+            description: "Date when the order was placed."
           - name: status
             data_type: varchar
-            description: ""
+            description: "{{ doc('order_status') }}"
           - name: _etl_loaded_at
             data_type: timestamp_ntz
-            description: ""
+            description: "Timestamp (no time zone) when the order record was loaded into the data warehouse."
