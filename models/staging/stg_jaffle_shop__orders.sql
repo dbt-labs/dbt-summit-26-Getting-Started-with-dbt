@@ -1,3 +1,7 @@
+{{ config(
+     materialized='view'
+) }}
+
 with orders_raw as (
     select *
     from {{ source('jaffle_shop', 'orders') }}
