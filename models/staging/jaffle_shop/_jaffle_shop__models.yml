@@ -10,4 +10,9 @@ models:
         description: "The unique identifier for each customer."
         data_tests:
           - not_null
+      - name: status 
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['placed', 'shipped', 'completed', 'returned', 'return_pending']
         
