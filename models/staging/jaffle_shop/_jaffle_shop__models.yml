@@ -1,0 +1,11 @@
+models:
+  - name: stg_jaffle_shop__orders
+    columns:
+      - name: order_id
+        description: "The unique identifier for each order."
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "The unique identifier for each customer."
+        
