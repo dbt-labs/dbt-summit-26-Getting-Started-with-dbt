@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: stg_jaffle_shop__customers
+    description: ""
+    columns:
+      - name: customer_id
+        data_type: number
+        description: ""
+        data_tests:
+          - unique
+          - not_null
+
+      - name: first_name
+        data_type: varchar
+        description: ""
+
+      - name: last_name
+        data_type: varchar
+        description: ""
+
+  - name: stg_jaffle_shop__orders
+    description: ""
+    columns:
+      - name: order_id
+        data_type: number
+        description: ""
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        data_type: number
+        description: ""
+        data_tests:
+          - relationships:
+              arguments:
+                field: customer_id
+                to: ref('stg_jaffle_shop__customers')
+
+      - name: order_date
+        data_type: date
+        description: ""
+
+      - name: order_status
+        data_type: varchar
+        description: ""
+        data_tests:
+          - accepted_values: 
+              arguments: 
+                values: ['placed', 'shipped', 'completed', 'returned', 'return_pending']
+
+      - name: _etl_loaded_at
+        data_type: timestamp_ntz
+        description: ""
