@@ -2,6 +2,7 @@ version: 2
 
 models:
   - name: dim_customers
+    description: "{{ doc('dim_customers') }}"
     columns:
       - name: customer_id
         data_tests:

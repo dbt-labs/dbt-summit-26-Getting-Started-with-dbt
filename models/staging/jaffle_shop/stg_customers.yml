@@ -7,12 +7,3 @@ models:
         data_tests:
           - unique
           - not_null
-  - name: stg_orders
-    columns:
-      - name: order_id
-        data_tests:
-          - unique
-          - not_null
-      - name: customer_id
-        data_tests:
-          - not_null
