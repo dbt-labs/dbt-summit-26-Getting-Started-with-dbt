@@ -1,0 +1,41 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    database: raw
+    tables:
+      - name: customers
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: orders
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: user_id
+            data_tests:
+              - not_null
+              # - relationships:
+              #     arguments:
+              #       to: source('jaffle_shop', 'customers')
+              #       field: id
+          - name: order_date
+            data_tests:
+              - not_null
+          - name: status
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values:
+                      - completed
+                      - placed
+                      - processing
+                      - return_pending
+                      - returned
+                      - shipped
