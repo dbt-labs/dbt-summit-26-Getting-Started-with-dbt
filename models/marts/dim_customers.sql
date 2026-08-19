@@ -1,3 +1,5 @@
+-- Import CTE's
+
 with customers as (
 
     select
