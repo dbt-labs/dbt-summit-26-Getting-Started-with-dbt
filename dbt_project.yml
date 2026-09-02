@@ -35,3 +35,4 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   my_new_project:
     +materialized: table
+    +static_analysis: strict
