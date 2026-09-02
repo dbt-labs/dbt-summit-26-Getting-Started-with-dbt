@@ -1,0 +1,20 @@
+sources:
+  - name: jaffle_shop
+    database: raw
+    schema: jaffle_shop
+    tables:
+      - name: customer_web_activity
+      - name: customers
+      - name: items
+      - name: locations
+      - name: order_items
+      - name: orders
+      - name: products
+      - name: raw_customers
+      - name: raw_items
+      - name: raw_orders
+      - name: raw_products
+      - name: raw_stores
+      - name: raw_supplies
+      - name: stores
+      - name: supplies
