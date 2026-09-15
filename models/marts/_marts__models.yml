@@ -2,8 +2,20 @@ version: 2
 
 models:
   - name: dim_customers
+    description: One row per customer, enriched with lifetime order dates and order count. Customers with no orders are retained with number_of_orders set to zero.
     columns:
       - name: customer_id
+        description: Primary key for the customer dimension.
         data_tests:
           - not_null
           - unique
+      - name: first_name
+        description: Customer's given name from the staged customer record.
+      - name: last_name
+        description: Customer's family name from the staged customer record.
+      - name: first_order_date
+        description: Earliest order date recorded for the customer; null when the customer has never ordered.
+      - name: most_recent_order_date
+        description: Latest order date recorded for the customer; null when the customer has never ordered.
+      - name: number_of_orders
+        description: Count of orders associated with the customer, defaulted to zero for customers with no orders.

@@ -2,21 +2,336 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    description: Raw Jaffle Shop operational data containing a numeric-ID customer/order feed and a separate UUID-based retail feed. Similarly named tables can represent different pipelines and should not be assumed interchangeable.
     database: raw
     schema: jaffle_shop
     tables:
       - name: customer_web_activity
+        description: Web engagement observations by customer and session date, with multiple observations possible for each customer.
+        columns:
+          - name: customer_id
+            description: Customer associated with the web activity; references customers.id.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: web_session_length
+            description: Duration of the recorded web session in the source system's time unit.
+          - name: session_date
+            description: Calendar date on which the web session occurred.
+          - name: count_pages_visited
+            description: Number of pages viewed during the recorded session.
+          - name: device_type
+            description: Device category used for the session, such as mobile or desktop.
+          - name: referrer_source
+            description: Marketing channel or site that referred the customer to the session.
+
       - name: customers
+        description: One row per customer in the numeric-ID customer/order feed used by the current staging models.
+        columns:
+          - name: id
+            description: Primary key for the customer in the numeric-ID feed.
+            data_tests:
+              - not_null
+              - unique
+          - name: first_name
+            description: Customer's given name as provided by the source system.
+          - name: last_name
+            description: Customer's family name as provided by the source system.
+
       - name: items
+        description: One row per UUID-based order item, mapping an item identifier to its order and product SKU.
+        columns:
+          - name: id
+            description: Primary key for the order item.
+            data_tests:
+              - not_null
+              - unique
+          - name: order_id
+            description: Identifier of the order containing the item within this feed.
+          - name: sku
+            description: Product SKU purchased in the order item; references products.sku.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'products')
+                    field: sku
+
       - name: locations
+        description: One row per retail location, including the local tax rate and opening timestamp.
+        columns:
+          - name: location_id
+            description: Primary key for the retail location.
+            data_tests:
+              - not_null
+              - unique
+          - name: location_name
+            description: Business-facing name of the retail location.
+          - name: tax_rate
+            description: Tax rate applied by the location.
+          - name: opened_date
+            description: Timestamp when the location opened for business.
+
       - name: order_items
+        description: One row per denormalized order item, including product classification, selling price, and allocated supply cost at order time.
+        columns:
+          - name: order_item_id
+            description: Primary key for the denormalized order item.
+            data_tests:
+              - not_null
+              - unique
+          - name: order_id
+            description: Identifier of the order containing the item within this feed.
+          - name: product_id
+            description: Product SKU sold on the order item; references products.sku.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'products')
+                    field: sku
+          - name: ordered_at
+            description: Timestamp when the associated order was placed.
+          - name: product_name
+            description: Product name captured on the order item at order time.
+          - name: product_price
+            description: Selling price captured for the product on this order item.
+          - name: is_food_item
+            description: Indicates whether the product is classified as food.
+          - name: is_drink_item
+            description: Indicates whether the product is classified as a drink.
+          - name: supply_cost
+            description: Supply cost allocated to the product sold on this order item.
+
       - name: orders
+        description: One row per order in the numeric-ID customer/order feed used by the current staging models.
+        config:
+          freshness:
+            warn_after:
+              count: 6
+              period: hour
+            error_after:
+              count: 24
+              period: hour
+          loaded_at_field: _etl_loaded_at
+        columns:
+          - name: id
+            description: Primary key for the order in the numeric-ID feed.
+            data_tests:
+              - not_null
+              - unique
+          - name: user_id
+            description: Customer who placed the order; references customers.id.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: order_date
+            description: Calendar date on which the order was placed.
+          - name: status
+            description: Current lifecycle state of the order.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values:
+                      - completed
+                      - placed
+                      - return_pending
+                      - returned
+                      - shipped
+          - name: _etl_loaded_at
+            description: Timestamp when the ingestion pipeline loaded the order, used for source freshness checks.
+
       - name: products
+        description: One row per sellable product SKU with descriptive attributes and current listed price.
+        columns:
+          - name: sku
+            description: Primary key and business identifier for the product.
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: Customer-facing product name.
+          - name: type
+            description: Product category used to distinguish food and beverage offerings.
+          - name: price
+            description: Current listed selling price for the product.
+          - name: description
+            description: Customer-facing details about the product.
+
       - name: raw_customers
+        description: One row per customer in the UUID-based retail feed.
+        columns:
+          - name: id
+            description: Primary key for the customer in the UUID-based feed.
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: Customer's full name as provided by the source system.
+
       - name: raw_items
+        description: One row per order item in the UUID-based retail feed, linking orders to product SKUs.
+        columns:
+          - name: id
+            description: Primary key for the order item.
+            data_tests:
+              - not_null
+              - unique
+          - name: order_id
+            description: Order containing the item; references raw_orders.id.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_orders')
+                    field: id
+          - name: sku
+            description: Product purchased in the item; references raw_products.sku.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_products')
+                    field: sku
+
       - name: raw_orders
+        description: One row per order in the UUID-based retail feed, including customer, store, and source-reported financial totals.
+        columns:
+          - name: id
+            description: Primary key for the order in the UUID-based feed.
+            data_tests:
+              - not_null
+              - unique
+          - name: customer
+            description: Customer who placed the order; references raw_customers.id.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_customers')
+                    field: id
+          - name: ordered_at
+            description: Timestamp when the order was placed.
+          - name: store_id
+            description: Store at which the order was placed; references raw_stores.id.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_stores')
+                    field: id
+          - name: subtotal
+            description: Source-reported order amount before tax.
+          - name: tax_paid
+            description: Source-reported tax amount charged on the order.
+          - name: order_total
+            description: Source-reported final order amount including tax.
+
       - name: raw_products
+        description: One row per product SKU in the UUID-based retail feed.
+        columns:
+          - name: sku
+            description: Primary key and business identifier for the product.
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: Customer-facing product name.
+          - name: type
+            description: Product category used to distinguish food and beverage offerings.
+          - name: price
+            description: Current listed selling price for the product.
+          - name: description
+            description: Customer-facing details about the product.
+
       - name: raw_stores
+        description: One row per store in the UUID-based retail feed.
+        columns:
+          - name: id
+            description: Primary key for the store.
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: Business-facing store name.
+          - name: opened_at
+            description: Timestamp when the store opened for business.
+          - name: tax_rate
+            description: Tax rate applied by the store.
+
       - name: raw_supplies
+        description: One row per supply and product SKU combination in the UUID-based retail feed, describing inputs needed to sell each product.
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - id
+                  - sku
+        columns:
+          - name: id
+            description: Business identifier for the supply; unique only in combination with sku.
+            data_tests:
+              - not_null
+          - name: name
+            description: Business-facing name of the supply item.
+          - name: cost
+            description: Source-reported cost of the supply item for the associated product.
+          - name: perishable
+            description: Indicates whether the supply item is perishable.
+          - name: sku
+            description: Product that uses the supply item; references raw_products.sku and completes the table's composite key.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_products')
+                    field: sku
+
       - name: stores
+        description: One row per store in the retail feed, including opening timestamp and local tax rate.
+        columns:
+          - name: id
+            description: Primary key for the store.
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: Business-facing store name.
+          - name: opened_at
+            description: Timestamp when the store opened for business.
+          - name: tax_rate
+            description: Tax rate applied by the store.
+
       - name: supplies
+        description: One row per supply and product SKU combination, describing inputs needed to sell each product.
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - id
+                  - sku
+        columns:
+          - name: id
+            description: Business identifier for the supply; unique only in combination with sku.
+            data_tests:
+              - not_null
+          - name: name
+            description: Business-facing name of the supply item.
+          - name: cost
+            description: Source-reported cost of the supply item for the associated product.
+          - name: perishable
+            description: Indicates whether the supply item is perishable.
+          - name: sku
+            description: Product that uses the supply item; references products.sku and completes the table's composite key.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'products')
+                    field: sku
