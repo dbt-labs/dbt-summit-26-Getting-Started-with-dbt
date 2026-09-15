@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: stg_jaffle_shop__customers
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_jaffle_shop__orders
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_jaffle_shop__customers')
+                field: id
+      - name: order_date
+        data_tests:
+          - not_null
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['completed', 'placed', 'return_pending', 'returned', 'shipped']
+
+  - name: stg_jaffle_shop__items
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: sku
+        data_tests:
+          - not_null
+
+  - name: stg_jaffle_shop__customer_web_activity
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_jaffle_shop__customers')
+                field: id
+      - name: session_date
+        data_tests:
+          - not_null
+      - name: web_session_length
+        data_tests:
+          - not_null
+      - name: count_pages_visited
+        data_tests:
+          - not_null
+      - name: device_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Desktop', 'Mobile', 'Tablet']
+      - name: referrer_source
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Direct', 'Email', 'Facebook', 'Google', 'Instagram', 'Other']
