@@ -6,17 +6,145 @@ sources:
     database: raw
     tables:
       - name: customer_web_activity
+        columns:
+          - name: customer_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: session_date
+            data_tests:
+              - not_null
+
       - name: customers
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: items
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: locations
+        columns:
+          - name: location_id
+            data_tests:
+              - unique
+              - not_null
+
       - name: order_items
+        columns:
+          - name: order_item_id
+            data_tests:
+              - unique
+              - not_null
+
       - name: orders
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: user_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: status
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values:
+                      - completed
+                      - placed
+                      - return_pending
+                      - returned
+                      - shipped
+
       - name: products
+        columns:
+          - name: sku
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_customers
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_items
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_orders
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_products
+        columns:
+          - name: sku
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_stores
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_supplies
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - id
+                  - sku
+        columns:
+          - name: id
+            data_tests:
+              - not_null
+          - name: sku
+            data_tests:
+              - not_null
+
       - name: stores
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: supplies
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - id
+                  - sku
+        columns:
+          - name: id
+            data_tests:
+              - not_null
+          - name: sku
+            data_tests:
+              - not_null
