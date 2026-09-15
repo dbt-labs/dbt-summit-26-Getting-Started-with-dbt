@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: customers
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: number_of_orders >= 0
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: number_of_orders
+        data_tests:
+          - not_null
