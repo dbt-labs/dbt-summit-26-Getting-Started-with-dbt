@@ -34,9 +34,9 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   Sunil_Test:
-    intermediate:
-      +materialized: table
     staging: 
       +materialized: view
+    intermediate:
+      +materialized: table
     marts: 
       +materialized: table
