@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: customers
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: number_of_orders
+        data_tests:
+          - not_null
+
+  - name: customer_order_rankings
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_rank
+        data_tests:
+          - not_null
