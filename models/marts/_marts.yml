@@ -2,15 +2,26 @@ version: 2
 
 models:
   - name: customers
+    description: Customer-level mart combining customer attributes with lifetime order activity. One row per customer, including customers who have never placed an order.
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
             expression: number_of_orders >= 0
     columns:
       - name: customer_id
+        description: Primary key for the customer.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer given name from the customer staging model.
+      - name: last_name
+        description: Customer family name from the customer staging model.
+      - name: first_order_date
+        description: Earliest order date for the customer; null when the customer has no orders.
+      - name: most_recent_order_date
+        description: Latest order date for the customer; null when the customer has no orders.
       - name: number_of_orders
+        description: Lifetime count of orders placed by the customer, defaulted to zero when no orders exist.
         data_tests:
           - not_null

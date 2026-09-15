@@ -2,36 +2,59 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    description: Commerce data from the Jaffle Shop operational systems, including customer, order, product, store, supply, and web activity records.
     database: raw
     schema: jaffle_shop
     tables:
       - name: customer_web_activity
+        description: One row per recorded customer web session, used to analyze engagement and acquisition behavior.
         columns:
           - name: customer_id
+            description: Customer associated with the web session.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'customers')
                     field: id
+          - name: web_session_length
+            description: Duration of the web session in the source system measurement unit.
+          - name: session_date
+            description: Calendar date on which the web session occurred.
+          - name: count_pages_visited
+            description: Number of pages viewed during the session.
+          - name: device_type
+            description: Category of device used for the session.
+          - name: referrer_source
+            description: Channel or site that referred the customer to the session.
 
       - name: customers
+        description: One row per customer used by the operational orders extract.
         columns:
           - name: id
+            description: Primary key for the customer.
             data_tests:
               - unique
               - not_null
+          - name: first_name
+            description: Customer given name as provided by the source system.
+          - name: last_name
+            description: Customer family name as provided by the source system.
 
       - name: items
+        description: One row per item associated with an order in the prepared commerce extract.
         columns:
           - name: id
+            description: Primary key for the item record.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: Identifier of the order containing the item.
             data_tests:
               - not_null
           - name: sku
+            description: Product stock-keeping unit purchased in the item record.
             data_tests:
               - not_null
               - relationships:
@@ -40,36 +63,63 @@ sources:
                     field: sku
 
       - name: locations
+        description: One row per Jaffle Shop location with its opening date and applicable tax rate.
         columns:
           - name: location_id
+            description: Primary key for the location.
             data_tests:
               - unique
               - not_null
+          - name: location_name
+            description: Business-facing name of the location.
+          - name: tax_rate
+            description: Tax rate applied to sales at the location.
+          - name: opened_date
+            description: Timestamp when the location opened for business.
 
       - name: order_items
+        description: One row per enriched order line, including product attributes and supply cost at the time of the extract.
         columns:
           - name: order_item_id
+            description: Primary key for the order line.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: Identifier of the order containing the line.
             data_tests:
               - not_null
           - name: product_id
+            description: Product stock-keeping unit associated with the line.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'products')
                     field: sku
+          - name: ordered_at
+            description: Timestamp when the order containing the line was placed.
+          - name: product_name
+            description: Product name captured for the order line.
+          - name: product_price
+            description: Selling price of the product associated with the order line.
+          - name: is_food_item
+            description: Indicates whether the product is categorized as food.
+          - name: is_drink_item
+            description: Indicates whether the product is categorized as a drink.
+          - name: supply_cost
+            description: Cost of supplies attributed to the order line.
 
       - name: orders
+        description: One row per order in the operational extract used by the customer-order staging models.
         columns:
           - name: id
+            description: Primary key for the order.
             data_tests:
               - unique
               - not_null
           - name: user_id
+            description: Customer who placed the order.
             data_tests:
               - not_null
               - relationships:
@@ -77,9 +127,11 @@ sources:
                     to: source('jaffle_shop', 'customers')
                     field: id
           - name: order_date
+            description: Calendar date on which the order was placed.
             data_tests:
               - not_null
           - name: status
+            description: Current fulfillment or return state of the order.
             data_tests:
               - not_null
               - accepted_values:
@@ -91,30 +143,48 @@ sources:
                       - returned
                       - shipped
           - name: _etl_loaded_at
+            description: Timestamp when the source row was loaded by the ingestion process.
             data_tests:
               - not_null
 
       - name: products
+        description: One row per sellable product in the prepared product catalog.
         columns:
           - name: sku
+            description: Primary stock-keeping unit for the product.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer-facing product name.
+          - name: type
+            description: Product category used to distinguish food and drink offerings.
+          - name: price
+            description: Current listed selling price of the product.
+          - name: description
+            description: Customer-facing product description.
 
       - name: raw_customers
+        description: One row per customer as delivered by the raw commerce ingestion feed.
         columns:
           - name: id
+            description: Primary key for the raw customer record.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer name in the original source format.
 
       - name: raw_items
+        description: One row per order item as delivered by the raw commerce ingestion feed.
         columns:
           - name: id
+            description: Primary key for the raw item record.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: Raw order containing the item.
             data_tests:
               - not_null
               - relationships:
@@ -122,6 +192,7 @@ sources:
                     to: source('jaffle_shop', 'raw_orders')
                     field: id
           - name: sku
+            description: Product stock-keeping unit associated with the item.
             data_tests:
               - not_null
               - relationships:
@@ -130,41 +201,72 @@ sources:
                     field: sku
 
       - name: raw_orders
+        description: One row per order as delivered by the raw commerce ingestion feed, including source-calculated financial amounts.
         columns:
           - name: id
+            description: Primary key for the raw order record.
             data_tests:
               - unique
               - not_null
           - name: customer
+            description: Customer who placed the order in the raw source format.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_customers')
                     field: id
+          - name: ordered_at
+            description: Timestamp when the order was placed.
           - name: store_id
+            description: Store at which the order was placed.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_stores')
                     field: id
+          - name: subtotal
+            description: Order amount before tax.
+          - name: tax_paid
+            description: Tax amount charged on the order.
+          - name: order_total
+            description: Total amount charged for the order including tax.
 
       - name: raw_products
+        description: One row per product as delivered by the raw product catalog feed.
         columns:
           - name: sku
+            description: Primary stock-keeping unit for the raw product record.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Product name in the source catalog.
+          - name: type
+            description: Product category in the source catalog.
+          - name: price
+            description: Listed selling price in the source catalog.
+          - name: description
+            description: Product description in the source catalog.
 
       - name: raw_stores
+        description: One row per store as delivered by the raw store ingestion feed.
         columns:
           - name: id
+            description: Primary key for the raw store record.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Business-facing store name.
+          - name: opened_at
+            description: Timestamp when the store opened for business.
+          - name: tax_rate
+            description: Tax rate applied to sales at the store.
 
       - name: raw_supplies
+        description: One row per supply and product combination in the raw supply-cost feed.
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               arguments:
@@ -173,9 +275,17 @@ sources:
                   - sku
         columns:
           - name: id
+            description: Identifier for the supply component.
             data_tests:
               - not_null
+          - name: name
+            description: Business-facing name of the supply component.
+          - name: cost
+            description: Unit cost of the supply component.
+          - name: perishable
+            description: Indicates whether the supply component is perishable.
           - name: sku
+            description: Product stock-keeping unit that uses the supply component.
             data_tests:
               - not_null
               - relationships:
@@ -184,13 +294,22 @@ sources:
                     field: sku
 
       - name: stores
+        description: One row per store in the prepared commerce extract.
         columns:
           - name: id
+            description: Primary key for the store.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Business-facing store name.
+          - name: opened_at
+            description: Timestamp when the store opened for business.
+          - name: tax_rate
+            description: Tax rate applied to sales at the store.
 
       - name: supplies
+        description: One row per supply and product combination in the prepared supply-cost extract.
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               arguments:
@@ -199,9 +318,17 @@ sources:
                   - sku
         columns:
           - name: id
+            description: Identifier for the supply component.
             data_tests:
               - not_null
+          - name: name
+            description: Business-facing name of the supply component.
+          - name: cost
+            description: Unit cost of the supply component.
+          - name: perishable
+            description: Indicates whether the supply component is perishable.
           - name: sku
+            description: Product stock-keeping unit that uses the supply component.
             data_tests:
               - not_null
               - relationships:
