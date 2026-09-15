@@ -2,11 +2,22 @@ version: 2
 
 models:
   - name: customers
+    description: Customer-level mart with one row per customer and lifetime order activity. Customers without orders are retained with zero orders and null order dates.
     columns:
       - name: customer_id
+        description: Unique numeric identifier for the customer.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer's given name.
+      - name: last_name
+        description: Customer's family name or last initial as supplied by the source.
+      - name: first_order_date
+        description: Earliest date on which the customer placed an order; null when the customer has no orders.
+      - name: most_recent_order_date
+        description: Most recent date on which the customer placed an order; null when the customer has no orders.
       - name: number_of_orders
+        description: Lifetime count of orders placed by the customer, including orders in every fulfillment and return status.
         data_tests:
           - not_null

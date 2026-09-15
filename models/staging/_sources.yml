@@ -2,35 +2,57 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    description: Raw and prepared operational data for Jaffle Shop customers, orders, products, stores, supplies, and web activity.
     schema: jaffle_shop
     database: raw
     tables:
       - name: customer_web_activity
+        description: Web browsing sessions attributed to customers. Multiple sessions can occur for the same customer on the same date, and the source does not provide a durable session identifier.
         columns:
           - name: customer_id
+            description: Customer associated with the web session.
             data_tests:
               - not_null
+          - name: web_session_length
+            description: Duration of the web session in seconds.
           - name: session_date
+            description: Calendar date on which the web session occurred.
             data_tests:
               - not_null
+          - name: count_pages_visited
+            description: Number of pages viewed during the web session.
+          - name: device_type
+            description: Category of device used for the web session, such as desktop or tablet.
+          - name: referrer_source
+            description: Channel or site that referred the customer to the web session.
 
       - name: customers
+        description: Legacy customer directory with one row per customer and separate first and last name fields.
         columns:
           - name: id
+            description: Unique numeric identifier for the customer.
             data_tests:
               - unique
               - not_null
+          - name: first_name
+            description: Customer's given name.
+          - name: last_name
+            description: Customer's family name or last initial as supplied by the source.
 
       - name: items
+        description: Order line assignments with one row per item purchased, linking an order to a product SKU.
         columns:
           - name: id
+            description: Unique identifier for the purchased item.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: Order that contains the item.
             data_tests:
               - not_null
           - name: sku
+            description: Product SKU purchased on the order.
             data_tests:
               - not_null
               - relationships:
@@ -39,69 +61,127 @@ sources:
                     field: sku
 
       - name: locations
+        description: Prepared retail location directory with one row per Jaffle Shop location.
         columns:
           - name: location_id
+            description: Unique identifier for the retail location.
             data_tests:
               - unique
               - not_null
+          - name: location_name
+            description: Display name of the retail location, typically the city served.
+          - name: tax_rate
+            description: Sales tax rate applied at the location, represented as a decimal fraction.
+          - name: opened_date
+            description: Date on which the retail location opened.
 
       - name: order_items
+        description: Enriched order lines with one row per purchased product, including product attributes and allocated supply cost in currency units.
         columns:
           - name: order_item_id
+            description: Unique identifier for the order line.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: Order that contains the line item.
             data_tests:
               - not_null
           - name: product_id
+            description: SKU of the product purchased on the line item.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'products')
                     field: sku
+          - name: ordered_at
+            description: Timestamp at which the associated order was placed.
+          - name: product_name
+            description: Product name captured for the order line.
+          - name: product_price
+            description: Selling price of the product in currency units.
+          - name: is_food_item
+            description: True when the purchased product is categorized as food.
+          - name: is_drink_item
+            description: True when the purchased product is categorized as a beverage.
+          - name: supply_cost
+            description: Total supply cost allocated to the order line in currency units.
 
       - name: orders
+        description: Legacy order headers with one row per order, linked to the numeric customer directory. Used by the current order staging model.
+        config:
+          freshness:
+            warn_after:
+              count: 6
+              period: hour
+            error_after:
+              count: 24
+              period: hour
+          loaded_at_field: _etl_loaded_at
         columns:
           - name: id
+            description: Unique numeric identifier for the order.
             data_tests:
               - unique
               - not_null
           - name: user_id
+            description: Customer who placed the order.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'customers')
                     field: id
+          - name: order_date
+            description: Calendar date on which the order was placed.
           - name: status
+            description: Current fulfillment or return state of the order.
             data_tests:
               - accepted_values:
                   arguments:
                     values: ['completed', 'placed', 'return_pending', 'returned', 'shipped']
+          - name: _etl_loaded_at
+            description: Timestamp at which the source row was loaded into the warehouse; used for source freshness checks.
 
       - name: products
+        description: Product catalog with one row per sellable SKU; monetary prices are stored in cents.
         columns:
           - name: sku
+            description: Unique stock-keeping unit for the product.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer-facing product name.
+          - name: type
+            description: Product category, such as beverage or food.
+          - name: price
+            description: Selling price of the product in cents.
+          - name: description
+            description: Customer-facing description of the product.
 
       - name: raw_customers
+        description: Landed customer records for the UUID-based commerce data, with one row per customer and the full name retained as supplied.
         columns:
           - name: id
+            description: Unique UUID for the customer.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer's full name as supplied by the source system.
 
       - name: raw_items
+        description: Landed UUID-based order lines with one row per purchased item, linking orders to product SKUs.
         columns:
           - name: id
+            description: Unique UUID for the purchased item.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: UUID of the order containing the item.
             data_tests:
               - not_null
               - relationships:
@@ -109,6 +189,7 @@ sources:
                     to: source('jaffle_shop', 'raw_orders')
                     field: id
           - name: sku
+            description: Product SKU purchased on the order.
             data_tests:
               - not_null
               - relationships:
@@ -117,41 +198,72 @@ sources:
                     field: sku
 
       - name: raw_orders
+        description: Landed UUID-based order headers with one row per order and monetary amounts stored in cents.
         columns:
           - name: id
+            description: Unique UUID for the order.
             data_tests:
               - unique
               - not_null
           - name: customer
+            description: UUID of the customer who placed the order.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_customers')
                     field: id
+          - name: ordered_at
+            description: Timestamp at which the order was placed.
           - name: store_id
+            description: UUID of the store that fulfilled the order.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_stores')
                     field: id
+          - name: subtotal
+            description: Pre-tax order amount in cents.
+          - name: tax_paid
+            description: Sales tax charged on the order in cents.
+          - name: order_total
+            description: Total order amount, including tax, in cents.
 
       - name: raw_products
+        description: Landed product catalog with one row per sellable SKU; monetary prices are stored in cents.
         columns:
           - name: sku
+            description: Unique stock-keeping unit for the product.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer-facing product name.
+          - name: type
+            description: Product category, such as beverage or food.
+          - name: price
+            description: Selling price of the product in cents.
+          - name: description
+            description: Customer-facing description of the product.
 
       - name: raw_stores
+        description: Landed retail store directory with one row per Jaffle Shop store.
         columns:
           - name: id
+            description: Unique UUID for the store.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Display name of the store, typically the city served.
+          - name: opened_at
+            description: Timestamp at which the store opened.
+          - name: tax_rate
+            description: Sales tax rate applied at the store, represented as a decimal fraction.
 
       - name: raw_supplies
+        description: Landed product supply requirements at the grain of supply ID and product SKU; costs are stored in cents.
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               arguments:
@@ -160,9 +272,17 @@ sources:
                   - sku
         columns:
           - name: id
+            description: Identifier for the supply item; the same supply can be used by multiple products.
             data_tests:
               - not_null
+          - name: name
+            description: Name of the supply item.
+          - name: cost
+            description: Unit cost of the supply item in cents.
+          - name: perishable
+            description: True when the supply item has a limited shelf life.
           - name: sku
+            description: Product SKU that requires the supply item.
             data_tests:
               - not_null
               - relationships:
@@ -171,13 +291,22 @@ sources:
                     field: sku
 
       - name: stores
+        description: Current retail store directory with one row per Jaffle Shop store.
         columns:
           - name: id
+            description: Unique UUID for the store.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Display name of the store, typically the city served.
+          - name: opened_at
+            description: Timestamp at which the store opened.
+          - name: tax_rate
+            description: Sales tax rate applied at the store, represented as a decimal fraction.
 
       - name: supplies
+        description: Current product supply requirements at the grain of supply ID and product SKU; costs are stored in cents.
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               arguments:
@@ -186,9 +315,17 @@ sources:
                   - sku
         columns:
           - name: id
+            description: Identifier for the supply item; the same supply can be used by multiple products.
             data_tests:
               - not_null
+          - name: name
+            description: Name of the supply item.
+          - name: cost
+            description: Unit cost of the supply item in cents.
+          - name: perishable
+            description: True when the supply item has a limited shelf life.
           - name: sku
+            description: Product SKU that requires the supply item.
             data_tests:
               - not_null
               - relationships:

@@ -2,27 +2,41 @@ version: 2
 
 models:
   - name: stg_jaffle_shop__customers
+    description: Clean customer directory with one row per customer, preserving the names supplied by the legacy Jaffle Shop source.
     columns:
       - name: customer_id
+        description: Unique numeric identifier for the customer, renamed from the source `id` field.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer's given name.
+      - name: last_name
+        description: Customer's family name or last initial as supplied by the source.
 
   - name: stg_jaffle_shop__orders
+    description: Clean order headers with one row per order, retaining the source's current fulfillment status and warehouse load timestamp.
     columns:
       - name: order_id
+        description: Unique numeric identifier for the order, renamed from the source `id` field.
         data_tests:
           - unique
           - not_null
       - name: user_id
+        description: Customer who placed the order; joins to `stg_jaffle_shop__customers.customer_id`.
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('stg_jaffle_shop__customers')
                 field: customer_id
+      - name: order_date
+        description: Calendar date on which the order was placed.
       - name: status
+        description: Current fulfillment or return state of the order.
         data_tests:
           - accepted_values:
               arguments:
                 values: ['completed', 'placed', 'return_pending', 'returned', 'shipped']
+      - name: _etl_loaded_at
+        description: Timestamp at which the source order row was loaded into the warehouse.
