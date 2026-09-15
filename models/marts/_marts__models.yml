@@ -2,12 +2,23 @@ version: 2
 
 models:
   - name: customers
+    description: One row per customer, enriched with lifetime order activity; customers without orders are retained.
     columns:
       - name: customer_id
+        description: Unique customer identifier that defines the model grain.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer's first name from the staged customer record.
+      - name: last_name
+        description: Customer's last name from the staged customer record.
+      - name: first_order_date
+        description: Earliest order date for the customer; null when the customer has never placed an order.
+      - name: most_recent_order_date
+        description: Latest order date for the customer; null when the customer has never placed an order.
       - name: number_of_orders
+        description: Lifetime count of orders associated with the customer, set to zero for customers without orders.
         data_tests:
           - not_null
           - dbt_utils.expression_is_true:
