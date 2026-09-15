@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: customers
+    description: One row per customer with identifying details and lifetime order activity.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "number_of_orders >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              (first_order_date is null and most_recent_order_date is null)
+              or first_order_date <= most_recent_order_date
+    columns:
+      - name: customer_id
+        description: Primary key for the customer.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_jaffle_shop__customers')
+                field: id
+      - name: first_name
+        description: Customer's first name.
+      - name: last_name
+        description: Customer's last name.
+      - name: first_order_date
+        description: Date of the customer's earliest order; null when the customer has never ordered.
+      - name: most_recent_order_date
+        description: Date of the customer's latest order; null when the customer has never ordered.
+      - name: number_of_orders
+        description: Lifetime count of orders placed by the customer, including zero for customers with no orders.
+        data_tests:
+          - not_null

@@ -2,20 +2,302 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    description: Raw and prepared operational data for customers, orders, products, stores, supplies, and web activity.
     database: raw
     tables:
       - name: customer_web_activity
+        description: Web browsing sessions associated with Jaffle Shop customers.
+        columns:
+          - name: customer_id
+            description: Customer associated with the web session.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: web_session_length
+            description: Duration of the web session.
+          - name: session_date
+            description: Calendar date when the web session occurred.
+            data_tests:
+              - not_null
+          - name: count_pages_visited
+            description: Number of pages viewed during the web session.
+          - name: device_type
+            description: Type of device used during the web session.
+          - name: referrer_source
+            description: Referring channel or source that led the customer to the site.
+
       - name: customers
+        description: Prepared customer records with one row per customer.
+        columns:
+          - name: id
+            description: Primary key for the customer.
+            data_tests:
+              - unique
+              - not_null
+          - name: first_name
+            description: Customer's first name.
+          - name: last_name
+            description: Customer's last name.
+
       - name: items
+        description: Prepared order line records linking orders to purchased products.
+        columns:
+          - name: id
+            description: Primary key for the order item.
+            data_tests:
+              - unique
+              - not_null
+          - name: order_id
+            description: Order containing the item.
+          - name: sku
+            description: Product SKU purchased in the order.
+
       - name: locations
+        description: Prepared store location records with one row per location.
+        columns:
+          - name: location_id
+            description: Primary key for the store location.
+            data_tests:
+              - unique
+              - not_null
+          - name: location_name
+            description: Display name of the store location.
+          - name: tax_rate
+            description: Tax rate applied at the location.
+          - name: opened_date
+            description: Timestamp when the location opened.
+
       - name: order_items
+        description: Enriched order line records with product attributes and supply costs.
+        columns:
+          - name: order_item_id
+            description: Primary key for the enriched order item.
+            data_tests:
+              - unique
+              - not_null
+          - name: order_id
+            description: Order containing the item.
+          - name: product_id
+            description: Product associated with the order item.
+          - name: ordered_at
+            description: Timestamp when the order was placed.
+          - name: product_name
+            description: Name of the purchased product.
+          - name: product_price
+            description: Selling price of the purchased product.
+          - name: is_food_item
+            description: Whether the product is categorized as food.
+          - name: is_drink_item
+            description: Whether the product is categorized as a drink.
+          - name: supply_cost
+            description: Supply cost allocated to the order item.
+
       - name: orders
+        description: Prepared customer orders with one row per order.
+        columns:
+          - name: id
+            description: Primary key for the order.
+            data_tests:
+              - unique
+              - not_null
+          - name: user_id
+            description: Customer who placed the order.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: order_date
+            description: Calendar date when the order was placed.
+            data_tests:
+              - not_null
+          - name: status
+            description: Current fulfillment or return status of the order.
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values:
+                      - completed
+                      - placed
+                      - return_pending
+                      - returned
+                      - shipped
+          - name: _etl_loaded_at
+            description: Timestamp when the order record was loaded into the warehouse.
+
       - name: products
+        description: Prepared product catalog with one row per product SKU.
+        columns:
+          - name: sku
+            description: Primary key and stock-keeping unit for the product.
+            data_tests:
+              - unique
+              - not_null
+          - name: name
+            description: Product name.
+          - name: type
+            description: Product category or type.
+          - name: price
+            description: Current selling price of the product.
+          - name: description
+            description: Longer-form product description.
+
       - name: raw_customers
+        description: Source-system customer records before standardization.
+        columns:
+          - name: id
+            description: Source-system identifier for the customer.
+            data_tests:
+              - unique
+              - not_null
+          - name: name
+            description: Customer's full name as provided by the source system.
+
       - name: raw_items
+        description: Source-system order items before enrichment or standardization.
+        columns:
+          - name: id
+            description: Source-system identifier for the order item.
+            data_tests:
+              - unique
+              - not_null
+          - name: order_id
+            description: Source-system order containing the item.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_orders')
+                    field: id
+          - name: sku
+            description: Source-system product SKU purchased in the order.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_products')
+                    field: sku
+
       - name: raw_orders
+        description: Source-system orders before enrichment or standardization.
+        columns:
+          - name: id
+            description: Source-system identifier for the order.
+            data_tests:
+              - unique
+              - not_null
+          - name: customer
+            description: Source-system identifier for the customer who placed the order.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_customers')
+                    field: id
+          - name: ordered_at
+            description: Timestamp when the order was placed.
+          - name: store_id
+            description: Source-system identifier for the store that fulfilled the order.
+          - name: subtotal
+            description: Order amount before tax.
+          - name: tax_paid
+            description: Tax charged on the order.
+          - name: order_total
+            description: Total order amount including tax.
+
       - name: raw_products
+        description: Source-system product catalog before standardization.
+        columns:
+          - name: sku
+            description: Source-system stock-keeping unit for the product.
+            data_tests:
+              - unique
+              - not_null
+          - name: name
+            description: Product name from the source system.
+          - name: type
+            description: Product category or type from the source system.
+          - name: price
+            description: Product selling price from the source system.
+          - name: description
+            description: Product description from the source system.
+
       - name: raw_stores
+        description: Source-system store records before standardization.
+        columns:
+          - name: id
+            description: Source-system identifier for the store.
+            data_tests:
+              - unique
+              - not_null
+          - name: name
+            description: Store name from the source system.
+          - name: opened_at
+            description: Timestamp when the store opened.
+          - name: tax_rate
+            description: Tax rate applied by the store.
+
       - name: raw_supplies
+        description: Source-system supply records at the supply and product SKU grain.
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - id
+                  - sku
+        columns:
+          - name: id
+            description: Source-system identifier for the supply item.
+            data_tests:
+              - not_null
+          - name: name
+            description: Name of the supply item.
+          - name: cost
+            description: Unit cost of the supply item.
+          - name: perishable
+            description: Whether the supply item is perishable.
+          - name: sku
+            description: Product SKU that uses the supply item.
+            data_tests:
+              - not_null
+
       - name: stores
+        description: Prepared store records with one row per store.
+        columns:
+          - name: id
+            description: Primary key for the store.
+            data_tests:
+              - unique
+              - not_null
+          - name: name
+            description: Store name.
+          - name: opened_at
+            description: Timestamp when the store opened.
+          - name: tax_rate
+            description: Tax rate applied by the store.
+
       - name: supplies
+        description: Prepared supply records at the supply and product SKU grain.
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - id
+                  - sku
+        columns:
+          - name: id
+            description: Identifier for the supply item.
+            data_tests:
+              - not_null
+          - name: name
+            description: Name of the supply item.
+          - name: cost
+            description: Unit cost of the supply item.
+          - name: perishable
+            description: Whether the supply item is perishable.
+          - name: sku
+            description: Product SKU that uses the supply item.
+            data_tests:
+              - not_null
