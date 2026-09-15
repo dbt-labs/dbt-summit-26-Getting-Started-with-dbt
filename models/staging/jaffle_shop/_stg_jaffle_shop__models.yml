@@ -2,19 +2,36 @@ version: 2
 
 models:
   - name: stg_jaffle_shop__customers
+    description: >
+      Clean staging interface for the curated customer source, at one row per customer.
+      The model currently performs column selection only and preserves source names and
+      values. Downstream models should ref this model instead of reading the source directly.
     columns:
       - name: id
+        description: Primary customer key inherited from `jaffle_shop.customers`.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer's given name, passed through without transformation.
+      - name: last_name
+        description: Customer's family name, passed through without transformation.
 
   - name: stg_jaffle_shop__orders
+    description: >
+      Clean staging interface for curated order headers, at one row per order. The model
+      selects the fields used for customer-order analytics without changing source values.
+      It is the trusted order input to `dim_customers`.
     columns:
       - name: id
+        description: Primary order key inherited from `jaffle_shop.orders`.
         data_tests:
           - unique
           - not_null
       - name: user_id
+        description: >
+          Customer foreign key for the order. It joins to
+          `stg_jaffle_shop__customers.id` and is renamed to `customer_id` in the customer mart.
         data_tests:
           - not_null
           - relationships:
@@ -22,51 +39,85 @@ models:
                 to: ref('stg_jaffle_shop__customers')
                 field: id
       - name: order_date
+        description: Calendar date on which the order was placed.
         data_tests:
           - not_null
       - name: status
+        description: >
+          Order lifecycle state. Allowed values are `placed`, `shipped`, `completed`,
+          `return_pending`, and `returned`. `dim_customers` currently counts orders in
+          every status rather than filtering to completed orders.
         data_tests:
           - accepted_values:
               arguments:
                 values: ['completed', 'placed', 'return_pending', 'returned', 'shipped']
+      - name: _etl_loaded_at
+        description: Timestamp when the source row was loaded into the warehouse.
 
   - name: stg_jaffle_shop__items
+    description: >
+      Clean staging interface for the curated item feed, at one row per item identifier.
+      The model selects identifiers only and does not enrich products or orders. The
+      source `order_id` values do not currently align with `stg_jaffle_shop__orders.id`,
+      so consumers should not assume that join is valid.
     columns:
       - name: id
+        description: Primary key for an item record, inherited from the source.
         data_tests:
           - unique
           - not_null
       - name: order_id
+        description: >
+          Order identifier supplied by the item feed. It is required but is not a
+          validated foreign key to the staged orders model.
         data_tests:
           - not_null
       - name: sku
+        description: Product stock-keeping unit associated with the item.
         data_tests:
           - not_null
 
   - name: stg_jaffle_shop__customer_web_activity
+    description: >
+      Clean staging interface for customer web engagement, at one recorded session or
+      activity row. It preserves the source fields without aggregation. Because the feed
+      has no session ID, this model does not claim a unique key; multiple rows per customer
+      and session date are valid.
     columns:
       - name: customer_id
+        description: Customer foreign key associated with the web session.
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('stg_jaffle_shop__customers')
                 field: id
-      - name: session_date
+      - name: web_session_length
+        description: >
+          Recorded session duration passed through from the source. The unit is not
+          defined in the source metadata and should be confirmed before reporting.
         data_tests:
           - not_null
-      - name: web_session_length
+      - name: session_date
+        description: Calendar date on which the session activity was recorded.
         data_tests:
           - not_null
       - name: count_pages_visited
+        description: Number of pages recorded as visited during the session.
         data_tests:
           - not_null
       - name: device_type
+        description: >
+          Device category used for the session: `Desktop`, `Mobile`, or `Tablet`.
+
         data_tests:
           - accepted_values:
               arguments:
                 values: ['Desktop', 'Mobile', 'Tablet']
       - name: referrer_source
+        description: >
+          Attributed source of the session: `Direct`, `Email`, `Facebook`, `Google`,
+          `Instagram`, or `Other`.
         data_tests:
           - accepted_values:
               arguments:

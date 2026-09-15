@@ -2,8 +2,17 @@ version: 2
 
 models:
   - name: dim_customers
+    description: >
+      Customer dimension at one row per customer, including customers who have never
+      placed an order. It starts from `stg_jaffle_shop__customers` and left joins an
+      all-status order summary from `stg_jaffle_shop__orders`. Order dates remain null
+      for customers with no orders, while `number_of_orders` is explicitly set to zero.
+      This model is suitable for customer-level segmentation and order-frequency analysis.
     columns:
       - name: customer_id
+        description: >
+          Primary key for the customer dimension, inherited from
+          `stg_jaffle_shop__customers.id`.
         data_tests:
           - unique
           - not_null
@@ -11,7 +20,22 @@ models:
               arguments:
                 to: ref('stg_jaffle_shop__customers')
                 field: id
+      - name: first_name
+        description: Customer's given name from the staged customer record.
+      - name: last_name
+        description: Customer's family name from the staged customer record.
+      - name: first_order_date
+        description: >
+          Earliest `order_date` across all orders associated with the customer. This is
+          null when the customer has no orders.
+      - name: most_recent_order_date
+        description: >
+          Latest `order_date` across all orders associated with the customer. This is
+          null when the customer has no orders.
       - name: number_of_orders
+        description: >
+          Count of all staged order records associated with the customer, regardless of
+          lifecycle status. Customers with no orders receive zero rather than null.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

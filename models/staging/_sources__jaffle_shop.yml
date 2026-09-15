@@ -2,70 +2,161 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    description: >
+      Operational and raw-ingestion data for the Jaffle Shop domain. The source
+      contains two overlapping sets of commerce tables: curated operational tables
+      such as `customers`, `orders`, and `products`, plus lower-level `raw_*` feeds.
+      Only `customers`, `orders`, `items`, and `customer_web_activity` currently feed
+      staging models; the remaining tables are declared for lineage, testing, and
+      future modeling.
     database: raw
     schema: jaffle_shop
     tables:
       - name: customer_web_activity
+        description: >
+          Captured customer web sessions used to analyze engagement and acquisition.
+          The grain is one recorded session/activity row. The feed has no durable
+          session identifier, so uniqueness is not asserted; use the customer and
+          session attributes together when investigating individual records.
         columns:
           - name: customer_id
+            description: >
+              Identifier of the customer associated with the session. This key is
+              validated against `customers.id`.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'customers')
                     field: id
+          - name: web_session_length
+            description: >
+              Recorded duration of the web session. The source does not declare the
+              unit, so consumers should confirm it before presenting duration-based metrics.
           - name: session_date
+            description: >
+              Calendar date on which the web session was recorded. Multiple sessions
+              for the same customer and date are possible.
             data_tests:
               - not_null
+          - name: count_pages_visited
+            description: Number of pages recorded as visited during the session.
+          - name: device_type
+            description: >
+              Device category reported for the session. Observed values are `Desktop`,
+              `Mobile`, and `Tablet`.
+          - name: referrer_source
+            description: >
+              Acquisition or navigation source attributed to the session. Observed
+              categories include direct, email, search, social, and other traffic.
 
       - name: customers
+        description: >
+          Curated customer master used by the current staging layer. The grain is one
+          row per customer identifier and the table carries the customer's first and
+          last name.
         columns:
           - name: id
+            description: Stable customer key and the primary key of this source table.
             data_tests:
               - unique
               - not_null
+          - name: first_name
+            description: Customer's given name as supplied by the operational system.
+          - name: last_name
+            description: Customer's family name as supplied by the operational system.
 
       - name: items
+        description: >
+          Curated item feed at one row per item identifier. Each row associates an item
+          with an order identifier and product SKU. In the current data, `order_id` does
+          not share a validated identifier domain with `orders.id`, so no relationship
+          test is applied between those fields.
         columns:
           - name: id
+            description: Primary key for an item record.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: >
+              Order identifier supplied by the item feed. It is required within this
+              table but is not currently a trusted foreign key to `orders.id`.
             data_tests:
               - not_null
           - name: sku
+            description: Product stock-keeping unit associated with the item.
             data_tests:
               - not_null
 
       - name: locations
+        description: >
+          Reference data for physical Jaffle Shop locations. The grain is one row per
+          location and includes its display name, tax rate, and opening timestamp.
+          This source is declared and tested but is not currently referenced by a model.
         columns:
           - name: location_id
+            description: Primary key for a physical location.
             data_tests:
               - unique
               - not_null
+          - name: location_name
+            description: Human-readable name of the location.
+          - name: tax_rate
+            description: Tax rate associated with transactions at the location.
+          - name: opened_date
+            description: Timestamp at which the location opened for business.
 
       - name: order_items
+        description: >
+          Detailed commerce line items at one row per order-item identifier. The table
+          includes product attributes and financial values denormalized onto each line.
+          Most `order_id` values do not align with `raw_orders.id` in the current data,
+          so that relationship is intentionally undocumented as a foreign key.
         columns:
           - name: order_item_id
+            description: Primary key for an individual order line.
             data_tests:
               - unique
               - not_null
+          - name: order_id
+            description: >
+              Order identifier supplied by this feed. It should be treated as local to
+              the feed until its identifier domain is reconciled with an orders table.
           - name: product_id
+            description: Product identifier represented by a SKU from `products`.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'products')
                     field: sku
+          - name: ordered_at
+            description: Timestamp at which the associated order was placed.
+          - name: product_name
+            description: Product name captured on the order line.
+          - name: product_price
+            description: Product selling price captured on the order line.
+          - name: is_food_item
+            description: Boolean flag indicating whether the product is categorized as food.
+          - name: is_drink_item
+            description: Boolean flag indicating whether the product is categorized as a drink.
+          - name: supply_cost
+            description: Supply cost attributed to the order line.
 
       - name: orders
+        description: >
+          Curated order header feed used by the current staging layer. The grain is one
+          row per order and each order belongs to a customer. Status records the order's
+          lifecycle state, while `_etl_loaded_at` records warehouse ingestion timing.
         columns:
           - name: id
+            description: Primary key for an order.
             data_tests:
               - unique
               - not_null
           - name: user_id
+            description: Customer identifier for the person who placed the order.
             data_tests:
               - not_null
               - relationships:
@@ -73,78 +164,155 @@ sources:
                     to: source('jaffle_shop', 'customers')
                     field: id
           - name: order_date
+            description: Calendar date on which the order was placed.
             data_tests:
               - not_null
+          - name: status
+            description: >
+              Current order lifecycle state. Observed states are `placed`, `shipped`,
+              `completed`, `return_pending`, and `returned`.
+          - name: _etl_loaded_at
+            description: Timestamp when the row was loaded into the warehouse by the ETL process.
 
       - name: products
+        description: >
+          Curated product catalog at one row per SKU. It provides product naming,
+          category, current price, and descriptive content. This table is not staged
+          directly but validates product identifiers used by other source feeds.
         columns:
           - name: sku
+            description: Stock-keeping unit and primary key for a product.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer-facing product name.
           - name: type
+            description: High-level product category, currently `beverage` or `jaffle`.
             data_tests:
               - accepted_values:
                   arguments:
                     values: ['beverage', 'jaffle']
+          - name: price
+            description: Current listed selling price for the product.
+          - name: description
+            description: Customer-facing descriptive text for the product.
 
       - name: raw_customers
+        description: >
+          Untransformed customer ingestion feed at one row per customer ID. Names are
+          retained in a single field rather than split into first and last names. This
+          table is tested for source integrity but is not used by the current models.
         columns:
           - name: id
+            description: Primary key supplied by the raw customer feed.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Customer name as a single unparsed source value.
 
       - name: raw_items
+        description: >
+          Untransformed item ingestion feed at one row per item ID. It links items to
+          `raw_orders` and carries the product SKU. This feed is not used by the current
+          staging models.
         columns:
           - name: id
+            description: Primary key supplied by the raw item feed.
             data_tests:
               - unique
               - not_null
           - name: order_id
+            description: Foreign key to the raw order containing the item.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_orders')
                     field: id
+          - name: sku
+            description: Product stock-keeping unit supplied for the raw item.
 
       - name: raw_orders
+        description: >
+          Untransformed order feed at one row per order ID. It contains customer and
+          store references plus source-provided subtotal, tax, and total amounts. This
+          feed is validated but is not currently referenced by a staging model.
         columns:
           - name: id
+            description: Primary key supplied by the raw order feed.
             data_tests:
               - unique
               - not_null
           - name: customer
+            description: Foreign key to the customer who placed the order.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_customers')
                     field: id
+          - name: ordered_at
+            description: Timestamp at which the order was placed.
           - name: store_id
+            description: Foreign key to the store where the order was placed.
             data_tests:
               - not_null
               - relationships:
                   arguments:
                     to: source('jaffle_shop', 'raw_stores')
                     field: id
+          - name: subtotal
+            description: Order value before tax, as supplied by the source system.
+          - name: tax_paid
+            description: Tax amount paid on the order.
+          - name: order_total
+            description: Final order value including tax, as supplied by the source system.
 
       - name: raw_products
+        description: >
+          Untransformed product catalog at one row per SKU. It preserves the source
+          product name, category, price, and description and is used to validate raw
+          supply records.
         columns:
           - name: sku
+            description: Stock-keeping unit and primary key supplied by the raw product feed.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Product name from the raw catalog.
+          - name: type
+            description: Product category from the raw catalog.
+          - name: price
+            description: Listed product price from the raw catalog.
+          - name: description
+            description: Descriptive product text from the raw catalog.
 
       - name: raw_stores
+        description: >
+          Untransformed store reference feed at one row per store ID. It carries the
+          store name, opening timestamp, and tax rate and is referenced by `raw_orders`.
         columns:
           - name: id
+            description: Primary key supplied by the raw store feed.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Human-readable store name.
+          - name: opened_at
+            description: Timestamp at which the store opened for business.
+          - name: tax_rate
+            description: Tax rate associated with transactions at the store.
 
       - name: raw_supplies
+        description: >
+          Untransformed supply catalog. The grain is one supply identifier and product
+          SKU combination because the same supply can be associated with multiple
+          products. Cost and perishability describe the supply input rather than the
+          finished product.
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               arguments:
@@ -153,9 +321,17 @@ sources:
                   - sku
         columns:
           - name: id
+            description: Supply identifier; unique only when combined with `sku`.
             data_tests:
               - not_null
+          - name: name
+            description: Human-readable name of the supply input.
+          - name: cost
+            description: Cost attributed to the supply input.
+          - name: perishable
+            description: Boolean flag indicating whether the supply is perishable.
           - name: sku
+            description: Product SKU that consumes or is associated with the supply.
             data_tests:
               - not_null
               - relationships:
@@ -164,13 +340,28 @@ sources:
                     field: sku
 
       - name: stores
+        description: >
+          Curated store reference at one row per store ID. It includes the store name,
+          opening timestamp, and applicable tax rate. This source is declared and tested
+          but is not currently referenced by a model.
         columns:
           - name: id
+            description: Primary key for a store.
             data_tests:
               - unique
               - not_null
+          - name: name
+            description: Human-readable store name.
+          - name: opened_at
+            description: Timestamp at which the store opened for business.
+          - name: tax_rate
+            description: Tax rate associated with transactions at the store.
 
       - name: supplies
+        description: >
+          Curated supply catalog at one supply identifier and product SKU combination.
+          It connects product inputs to the product catalog and records cost and
+          perishability. This source is not currently referenced by a model.
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               arguments:
@@ -179,9 +370,17 @@ sources:
                   - sku
         columns:
           - name: id
+            description: Supply identifier; unique only when combined with `sku`.
             data_tests:
               - not_null
+          - name: name
+            description: Human-readable name of the supply input.
+          - name: cost
+            description: Cost attributed to the supply input.
+          - name: perishable
+            description: Boolean flag indicating whether the supply is perishable.
           - name: sku
+            description: Product SKU that consumes or is associated with the supply.
             data_tests:
               - not_null
               - relationships:
