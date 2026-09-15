@@ -6,17 +6,192 @@ sources:
     database: raw
     tables:
       - name: customer_web_activity
+        columns:
+          - name: customer_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: session_date
+            data_tests:
+              - not_null
+
       - name: customers
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: items
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: order_id
+            data_tests:
+              - not_null
+          - name: sku
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'products')
+                    field: sku
+
       - name: locations
+        columns:
+          - name: location_id
+            data_tests:
+              - unique
+              - not_null
+
       - name: order_items
+        columns:
+          - name: order_item_id
+            data_tests:
+              - unique
+              - not_null
+          - name: order_id
+            data_tests:
+              - not_null
+          - name: product_id
+            data_tests:
+              - not_null
+
       - name: orders
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: user_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: order_date
+            data_tests:
+              - not_null
+          - name: status
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['completed', 'placed', 'return_pending', 'returned', 'shipped']
+
       - name: products
+        columns:
+          - name: sku
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_customers
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_items
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: order_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_orders')
+                    field: id
+          - name: sku
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_products')
+                    field: sku
+
       - name: raw_orders
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: customer
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_customers')
+                    field: id
+          - name: store_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_stores')
+                    field: id
+
       - name: raw_products
+        columns:
+          - name: sku
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_stores
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: raw_supplies
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns: [id, sku]
+        columns:
+          - name: id
+            data_tests:
+              - not_null
+          - name: sku
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'raw_products')
+                    field: sku
+
       - name: stores
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
       - name: supplies
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns: [id, sku]
+        columns:
+          - name: id
+            data_tests:
+              - not_null
+          - name: sku
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'products')
+                    field: sku
