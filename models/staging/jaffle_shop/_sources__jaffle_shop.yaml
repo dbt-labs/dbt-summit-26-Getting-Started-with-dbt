@@ -2,6 +2,7 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    description: "{{ doc('source_jaffle_shop') }}"
     schema: jaffle_shop
     database: raw
     tables:
@@ -19,6 +20,7 @@ sources:
               - not_null
 
       - name: customers
+        description: "{{ doc('source_jaffle_shop_customers') }}"
         columns:
           - name: id
             data_tests:
@@ -47,6 +49,16 @@ sources:
               - not_null
 
       - name: orders
+        description: "{{ doc('source_jaffle_shop_orders') }}"
+        config:
+          freshness:
+            warn_after:
+              count: 24
+              period: hour
+            error_after:
+              count: 48
+              period: hour
+          loaded_at_field: _etl_loaded_at
         columns:
           - name: id
             data_tests:
@@ -66,6 +78,7 @@ sources:
                     values:
                       - completed
                       - placed
+                      - processing
                       - return_pending
                       - returned
                       - shipped

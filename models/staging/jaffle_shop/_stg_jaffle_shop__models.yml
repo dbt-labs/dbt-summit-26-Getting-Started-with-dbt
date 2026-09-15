@@ -2,9 +2,7 @@ version: 2
 
 models:
   - name: stg_jaffle_shop__customer
-    description: >
-      Standardized customer records from the Jaffle Shop source. One row per
-      customer, with the source identifier renamed for consistent downstream use.
+    description: "{{ doc('stg_jaffle_shop__customer') }}"
     columns:
       - name: customer_id
         description: Primary key for the customer, renamed from the source `id` field.
@@ -17,9 +15,7 @@ models:
         description: Customer's last name as provided by the source system.
 
   - name: stg_jaffle_shop__orders
-    description: >
-      Standardized order records from the Jaffle Shop source. One row per order,
-      with customer and order identifiers named consistently for downstream joins.
+    description: "{{ doc('stg_jaffle_shop__orders') }}"
     columns:
       - name: order_id
         description: Primary key for the order, renamed from the source `id` field.
@@ -37,13 +33,14 @@ models:
       - name: order_date
         description: Calendar date on which the order was placed.
       - name: status
-        description: Current order lifecycle status reported by the source system.
+        description: "{{ doc('order_status') }}"
         data_tests:
           - accepted_values:
               arguments:
                 values:
                   - completed
                   - placed
+                  - processing
                   - return_pending
                   - returned
                   - shipped

@@ -2,10 +2,7 @@ version: 2
 
 models:
   - name: customers
-    description: >
-      Customer-level mart for customer and order analysis. One row per customer,
-      including customers who have never ordered; those customers have null order
-      dates and a `number_of_orders` value of zero.
+    description: "{{ doc('customers') }}"
     columns:
       - name: customer_id
         description: Primary key for the customer.
