@@ -1,3 +1,5 @@
+
+
 with customers as (
 
     select
