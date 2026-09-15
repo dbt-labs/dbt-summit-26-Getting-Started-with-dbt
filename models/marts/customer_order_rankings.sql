@@ -8,7 +8,7 @@ with customers as (
         most_recent_order_date,
         number_of_orders
 
-    from {{ ref('customers') }}
+    from {{ ref('dim_customers') }}
 
 ),
 

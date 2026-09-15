@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: dim_customers
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: number_of_orders >= 0
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: first_order_date is null or most_recent_order_date is null or first_order_date <= most_recent_order_date
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: number_of_orders
+        data_tests:
+          - not_null
+
+  - name: customer_order_rankings
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: order_count_rank >= 1
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: order_count_rank
+        data_tests:
+          - not_null

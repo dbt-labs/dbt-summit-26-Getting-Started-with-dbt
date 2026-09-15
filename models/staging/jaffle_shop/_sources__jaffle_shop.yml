@@ -7,10 +7,42 @@ sources:
     tables:
       - name: customer_web_activity
       - name: customers
+        columns:
+          - name: id
+            description: Primary key for the customers table
+            data_tests:
+              - unique
+              - not_null
       - name: items
       - name: locations
       - name: order_items
       - name: orders
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: user_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('jaffle_shop', 'customers')
+                    field: id
+          - name: order_date
+            data_tests:
+              - not_null
+          - name: status
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values:
+                      - completed
+                      - placed
+                      - return_pending
+                      - returned
+                      - shipped
       - name: products
       - name: raw_customers
       - name: raw_items
