@@ -63,6 +63,15 @@ sources:
               - not_null
 
       - name: orders
+        config: 
+          freshness:
+            warn_after:
+              count: 6
+              period: hour
+            error_after:
+              count: 24
+              period: hour
+          loaded_at_field: _etl_loaded_at
         columns:
           - name: id
             data_tests:
