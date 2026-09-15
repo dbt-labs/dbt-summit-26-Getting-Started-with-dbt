@@ -1,0 +1,89 @@
+version: 2
+
+models:
+  - name: stg_jaffle_shop__customers
+    description: Cleaned customer records from Jaffle Shop. One row per customer.
+    columns:
+      - name: customer_id
+        description: Unique identifier for the customer.
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: Customer's first name.
+      - name: last_name
+        description: Customer's last name.
+
+  - name: stg_jaffle_shop__customers_test
+    description: Test customer records from Jaffle Shop. One row per test customer.
+    columns:
+      - name: customer_id
+        description: Unique identifier for the test customer.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_name
+        description: Full name of the test customer.
+
+  - name: stg_jaffle_shop__orders
+    description: Cleaned order records from Jaffle Shop. One row per order.
+    columns:
+      - name: order_id
+        description: Unique identifier for the order.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Identifier for the customer who placed the order.
+        data_tests:
+          - not_null
+      - name: order_date
+        description: Date the order was placed.
+        data_tests:
+          - not_null
+      - name: status
+        description: Current fulfillment status of the order.
+      - name: _etl_loaded_at
+        description: Timestamp when the source record was loaded by the ingestion process.
+
+  - name: stg_jaffle_shop__orders_view
+    description: Cleaned order records exposed by the Jaffle Shop source view. One row per order.
+    columns:
+      - name: order_id
+        description: Unique identifier for the order.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Identifier for the customer who placed the order.
+        data_tests:
+          - not_null
+      - name: order_date
+        description: Date the order was placed.
+        data_tests:
+          - not_null
+      - name: status
+        description: Current fulfillment status of the order.
+      - name: _etl_loaded_at
+        description: Timestamp when the source view record was last refreshed.
+
+  - name: stg_jaffle_shop__products
+    description: Cleaned product catalog records from Jaffle Shop. One row per product SKU.
+    columns:
+      - name: product_sku
+        description: Unique stock-keeping unit for the product.
+        data_tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: Customer-facing product name.
+        data_tests:
+          - not_null
+      - name: product_type
+        description: Category assigned to the product.
+      - name: product_description
+        description: Customer-facing description of the product.
+      - name: price
+        description: Product price in the source system's minor currency unit.
+        data_tests:
+          - not_null

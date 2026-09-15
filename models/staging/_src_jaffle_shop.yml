@@ -1,0 +1,66 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    description: Raw customer, order, and product data loaded from the Jaffle Shop application.
+    database: raw
+    tables:
+      - name: customers
+        description: Customer account records. One row per customer.
+        columns:
+          - name: id
+            description: Source-system customer identifier.
+          - name: first_name
+            description: Customer's first name.
+          - name: last_name
+            description: Customer's last name.
+
+      - name: customers_test
+        description: Test customer records used for development and validation.
+        columns:
+          - name: id
+            description: Source-system test customer identifier.
+          - name: name
+            description: Full name of the test customer.
+
+      - name: orders
+        description: Order records from the Jaffle Shop application. One row per order.
+        columns:
+          - name: id
+            description: Source-system order identifier.
+          - name: user_id
+            description: Identifier for the customer who placed the order.
+          - name: order_date
+            description: Date the order was placed.
+          - name: status
+            description: Current fulfillment status of the order.
+          - name: _etl_loaded_at
+            description: Timestamp when the record was loaded by the ingestion process.
+
+      - name: orders_view
+        description: Source view of Jaffle Shop orders. One row per order.
+        columns:
+          - name: id
+            description: Source-system order identifier.
+          - name: user_id
+            description: Identifier for the customer who placed the order.
+          - name: order_date
+            description: Date the order was placed.
+          - name: status
+            description: Current fulfillment status of the order.
+          - name: _etl_loaded_at
+            description: Timestamp when the source view record was last refreshed.
+
+      - name: products
+        description: Product catalog records. One row per product SKU.
+        columns:
+          - name: sku
+            description: Stock-keeping unit for the product.
+          - name: name
+            description: Customer-facing product name.
+          - name: type
+            description: Category assigned to the product.
+          - name: description
+            description: Customer-facing product description.
+          - name: price
+            description: Product price in the source system's minor currency unit.
